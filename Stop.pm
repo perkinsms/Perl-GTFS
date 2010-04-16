@@ -152,18 +152,20 @@ sub fromDB {
 
     my %stops;
 
-    my $STOPSQUERY = "SELECT stop_id, stop_name, stop_desc, stop_lat, stop_lon, zone_id FROM stops";
-    my $sth = $dbh->prepare($STOPSQUERY);
+    my $sth = $dbh->prepare("SELECT * FROM stops");
+    $sth->execute();
+    print join ', ', @{$sth->{NAME_lc}};
+
+    my $STOPSQUERY = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops";
+    $sth = $dbh->prepare($STOPSQUERY) or die "Could not prepare stops query!";
     $sth->execute;
 
-    while (my ($stop_id, $stop_name, $stop_desc, $stop_lat, $stop_lon, $zone_id) = $sth->fetchrow()) {
+    while (my ($stop_id, $stop_name, $stop_lat, $stop_lon) = $sth->fetchrow()) {
         $stops{$stop_id} = $class->new( { 
                 stop_id => $stop_id,
                 stop_name => $stop_name,
-                stop_desc => $stop_desc,
                 stop_lat => $stop_lat,
                 stop_lon => $stop_lon,
-                zone_id => $zone_id,
         });
     }
 

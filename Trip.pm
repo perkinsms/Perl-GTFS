@@ -135,19 +135,19 @@ sub fromDB {
 
     my %trips;
 
-    my $TRIPSQUERY = "SELECT route_id, service_id, trip_id, trip_headsign, direction_id, block_id FROM trips";
-    my $sth = $dbh->prepare($TRIPSQUERY);
+    my $sth = $dbh->prepare("SELECT * FROM trips");
+    $sth->execute();
+    print join ', ', @{$sth->{NAME_lc}};
+
+    my $TRIPSQUERY = "SELECT route_id, service_id, trip_id FROM trips";
+    $sth = $dbh->prepare($TRIPSQUERY);
     $sth->execute;
 
-    while (my ($route_id, $service_id, $trip_id, $trip_headsign, $direction_id, $block_id, $pattern_id) = $sth->fetchrow()) {
+    while (my ($route_id, $service_id, $trip_id) = $sth->fetchrow()) {
         $trips{$trip_id} = $class->new( { 
                 route_id => $route_id,
                 service_id => $service_id,
                 trip_id => $trip_id,
-                trip_headsign => $trip_headsign,
-                direction_id => $direction_id,
-                block_id => $block_id,
-                pattern_id => $pattern_id,
         });
     }
 

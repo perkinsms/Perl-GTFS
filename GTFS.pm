@@ -11,7 +11,7 @@ use Pattern;
 sub new {
 	my $proto = shift;
     my $dbh = shift;
-    my $optref = shift or undef;
+    my $optref = shift;
 	my $class = ref($proto) || $proto;
 	my $self = {};
     $self->{database} = $dbh;
@@ -20,8 +20,7 @@ sub new {
     $self->getTripsfromDB();
     $self->getStopsfromDB();
     $self->getRoutesfromDB();
-    $self->get_patterns();
-    $self->initialize;
+    return $self;
 }
 
 sub get_patterns {

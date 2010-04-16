@@ -129,14 +129,17 @@ sub fromDB {
 
     my %routes;
 
-    my $ROUTESQUERY = "SELECT route_id, agency_id, route_short_name, route_long_name, route_type FROM routes";
-    my $sth = $dbh->prepare($ROUTESQUERY);
+    my $sth = $dbh->prepare("SELECT * FROM routes");
+    $sth->execute();
+    print join ', ', @{$sth->{NAME_lc}};
+
+    my $ROUTESQUERY = "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
+    $sth = $dbh->prepare($ROUTESQUERY);
     $sth->execute;
 
-    while (my ($route_id, $agency_id, $route_short_name, $route_long_name, $route_type) = $sth->fetchrow()) {
+    while (my ($route_id, $route_short_name, $route_long_name, $route_type) = $sth->fetchrow()) {
         $routes{$route_id} = $class->new( { 
                 route_id => $route_id, 
-                agency_id=> $agency_id, 
                 route_short_name => $route_short_name, 
                 route_long_name => $route_long_name, 
                 route_type => $route_type,
