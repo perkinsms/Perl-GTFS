@@ -1,0 +1,41 @@
+Perl-GTFS
+
+A set of perl modules for dealing with GTFS data
+
+See Google's GTFS spec for the details on what a GTFS Feed looks like
+
+USAGE:
+
+Create a database handle $dbh with one of the DBI modules.
+
+For example, using CSV, with the files stored in $mydir:
+
+use DBI;
+$dbh = DBI->connect("DBI:CSV:f_dir=$mydir;f_ext=.txt;csv_sep_char=,;csv_quote_char=\"") or die;
+$gtfs_data = GTFS->new($dbh,[$options]);
+
+
+or using a mySQL database:
+
+use DBI;
+$dbh = DBI->connect("DBI:mysql:database=$database",$username,$password) or die;
+$gtfs_data = GTFS->new($dbh,[$options]);
+
+
+You can use other DBI connection handles, I've tested CSV and MySQL, which is what I'll use for testing.
+
+$gtfs_data is a reference to a hash with the following key->value pairs:
+
+$->{database} is the stored reference to the database handle $dbh
+$->{options} is a currently unsupported hashref that does nothing at this time
+$->{routes} is a reference to a hash of Route objects (see Route.pm), keyed on the route_id attribute
+$->{trips} is a similar has for Trip objects (Trip.pm) keyed on trip_id
+$->{stops} is the same with Stop.pm and stop_id
+
+
+TO DO:
+write similar methods for writing each object type to a database handle
+extend the methods for Route and Trip to fill in the array of trips and stops, respectively
+write a GTFS method for initializing the Pattern objects and storing them in the database
+write methods to find average speed, travel time and stops per mile for each Trip or Pattern object
+write a KML output module
