@@ -154,7 +154,9 @@ sub fromDB {
 
     my $sth = $dbh->prepare("SELECT * FROM stops");
     $sth->execute();
+    print "Stops: ";
     print join ', ', @{$sth->{NAME_lc}};
+    print "\n";
 
     my $STOPSQUERY = "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops";
     $sth = $dbh->prepare($STOPSQUERY) or die "Could not prepare stops query!";

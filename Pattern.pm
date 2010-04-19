@@ -173,7 +173,5 @@ sub fromDB {
 
     return \%patterns;
 }
-
-
     
 1;

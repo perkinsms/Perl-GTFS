@@ -17,9 +17,10 @@ sub new {
     $self->{database} = $dbh;
     $self->{options} = $optref;
 	bless($self, $class);
-    $self->getTripsfromDB();
     $self->getStopsfromDB();
+    $self->getTripsfromDB();
     $self->getRoutesfromDB();
+    $self->get_patterns();
     return $self;
 }
 
@@ -29,6 +30,7 @@ sub get_patterns {
     my $routes = $self->{routes};
     my $trips = $self->{trips};
     my $stops = $self->{stops};
+    $self->{patterns} = {};
 
     # analyze the trips and routes to find the patterns
     my $patternquery = "select stop_sequence, stop_id from stop_times where trip_id = ? order by stop_sequence";
@@ -36,7 +38,7 @@ sub get_patterns {
     my $pattern_id = 0;
 
     foreach my $route (sort {$a->route_id <=> $b->route_id} values %$routes) {
-        my $patterns = {};
+        my $route_patterns = {};
         foreach my $trip_id ($route->trips) {
             my $trip = $trips->{$trip_id};
             my (@stoporder, @stoplist);
@@ -59,7 +61,7 @@ sub get_patterns {
             #check to see if this pattern we just created
             #matches one that already exists
             
-            if ((my $matchpattern) = grep { $pattern->isequal($_) } values %$patterns) {
+            if ((my $matchpattern) = grep { $pattern->isequal($_) } values %$route_patterns) {
 
                     #increase the count of the matched pattern
                     #and update the pattern id
@@ -71,21 +73,22 @@ sub get_patterns {
 
                     #increment pattern_id,
                     #change the current pattern_id,
-                    #and add it to the %patterns hash
+                    #and add it to the %route_patterns hash
 
                     ++$pattern_id;
                     $pattern->pattern_id($pattern_id);
-                    $patterns->{$pattern_id} = $pattern;
+                    $route_patterns->{$pattern_id} = $pattern;
                     print "Found a new pattern: " . $pattern->pattern_id . "\n";
 
             }
 
-            #now let's update the sql database linking this trip
-            #to a particular pattern
             $trips->{$trip_id}{pattern} = $pattern_id; 
         }
 
-        $route->push_patterns( values %$patterns );
+        $route->push_patterns( values %$route_patterns );
+        while (my ($id, $pat) = each %$route_patterns) {
+            $self->{patterns}{$id} = $pat;
+        }
 
     }
 
@@ -120,7 +123,12 @@ sub getTripsfromDB {
 
 sub getRoutesfromDB {
     my $self = shift;
+    my $trips = $self->{trips} || $self->getTripsfromDB();
     $self->{routes} = Route->fromDB($self->{database});
+    foreach my $trip (values %$trips) {
+        my $route_id = $trip->{route_id};
+        $self->{routes}{$route_id}->push_trips($trip->trip_id);
+    }
 }
 
 1;

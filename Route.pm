@@ -23,6 +23,17 @@ use strict;
 
 package Route;
 
+my %reqcols;
+foreach my $col (qw(route_id route_short_name route_long_name route_type)) {
+    $reqcols{$col} = 1;
+}
+
+my %optcols;
+foreach my $col (qw(agency_id route_desc route_url route_color route_text_color)) {
+    $optcols{$col} = 1;
+}
+
+
 sub new {
 	my $proto = shift;
     my $data = shift;
@@ -131,7 +142,9 @@ sub fromDB {
 
     my $sth = $dbh->prepare("SELECT * FROM routes");
     $sth->execute();
+    print "Routes: ";
     print join ', ', @{$sth->{NAME_lc}};
+    print "\n";
 
     my $ROUTESQUERY = "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
     $sth = $dbh->prepare($ROUTESQUERY);

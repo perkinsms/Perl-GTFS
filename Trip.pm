@@ -137,7 +137,9 @@ sub fromDB {
 
     my $sth = $dbh->prepare("SELECT * FROM trips");
     $sth->execute();
+    print "Trips: ";
     print join ', ', @{$sth->{NAME_lc}};
+    print "\n";
 
     my $TRIPSQUERY = "SELECT route_id, service_id, trip_id FROM trips";
     $sth = $dbh->prepare($TRIPSQUERY);
