@@ -21,13 +21,7 @@ use strict;
 #  name - get or set NAME attribute
 package Stop;
 
-use Data::Dumper;
-
 my $PI = 3.14159;
-
-my @reqcols = qw/stop_id stop_name stop_lat stop_lon/;
-my @optcols = qw/stop_code stop_desc zone_id stop_url location_type parent_station CENTERDIST/;
-
 
 sub new {
 	my $proto = shift;
@@ -35,16 +29,16 @@ sub new {
 	my $class = ref($proto) || $proto;
 	my $self = {};
 	$self->{stop_id} = $data->{stop_id} or die "No Stop ID provided: $!";
-	$self->{stop_code} = ($data->{stop_code} or undef);
 	$self->{stop_name} = $data->{stop_name} or die "No Stop Name provided: $!";
-	$self->{stop_desc} = ($data->{stop_desc} or undef);
 	$self->{stop_lat} = $data->{stop_lat} or die "No Stop Lat provided: $!";
 	$self->{stop_lon} = $data->{stop_lon} or die "No Stop Lon provided: $!";
+	$self->{stop_desc} = ($data->{stop_desc} or undef);
+	$self->{stop_code} = ($data->{stop_code} or undef);
 	$self->{zone_id} = ($data->{zone_id} or undef);
 	$self->{stop_url} = ($data->{stop_url} or undef); 
 	$self->{location_type} = ($data->{location_type} or undef);
 	$self->{parent_station} = ($data->{parent_station} or undef);
-	$self->{CENTERDIST} = ($data->{CENTERDIST} || 999999);
+	$self->{CENTERDIST} = ($data->{CENTERDIST} || undef);
 	bless($self, $class);
 	return $self;
 }
@@ -145,82 +139,21 @@ sub hvsin {
 	return $result;
 }
 
-sub Dump {
-	my $self = shift;
-	print Dumper($self);
-}
-
 sub fromDB {
     my $class = shift;
     my $dbh = shift;
-
     my %stops;
 
-    my $STOPSQUERY = "SELECT * FROM stops";
-    my $sth = $dbh->prepare($STOPSQUERY) or die "Could not prepare stops query!";
+    my $sth = $dbh->prepare("SELECT * FROM stops") 
+        or die "Could not prepare stops query!";
     $sth->execute;
 
     while (my $datahash = $sth->fetchrow_hashref("NAME_lc")) {
-        #print Dumper($datahash);
-        my $stop_id = $datahash->{stop_id};
-        #print $stop_id . "\n";
-        $stops{$stop_id} = $class->new($datahash);
+        my $id = $datahash->{stop_id};
+        $stops{$id} = $class->new($datahash);
     }
     $sth->finish;
     return \%stops;
-}
-
-sub get_columns {
-    my $class = shift;
-    my $dbh = shift;
-    my @columnslist = ();
-
-    my $sth = $dbh->prepare("SELECT * FROM stops");
-    $sth->execute();
-    my @dbcolumns = @{$sth->{NAME_lc}};
-
-    my $requiredcmp = List::Compare->new(\@reqcols, \@dbcolumns);
-    my $optionalcmp = List::Compare->new(\@optcols, \@dbcolumns);
-
-    if ($requiredcmp->is_LsubsetR) {
-        print "All required columns present\n";
-        push @columnslist, @reqcols;
-    } else {
-        print "Missing required column: " . join(", ",$requiredcmp->get_unique) . "\n";
-    }
-
-    if ($optionalcmp->get_intersection) {
-        print "Optional columns present " . join(", ", $optionalcmp->get_intersection) . "\n";
-        push @columnslist, $optionalcmp->get_intersection;
-    } else {
-        print "No optional columns present.\n";
-    }
-
-    return @columnslist;
-}
-
-sub toDB {
-    my $class = shift;
-    my $dbh = shift;
-    my $stopref = shift;
-    my %stops = %{$stopref};
-
-    $dbh->do("DROP TABLE IF EXISTS stops") or die "Could not drop table stops";
-    $dbh->do("CREATE TABLE stops (stop_id varchar(20), stop_name varchar(20), stop_desc varchar(60), stop_lat varchar(20), stop_lon varchar(20), zone_id varchar(20))") or die "Could not create table stops";
-
-    my $QUERY = "INSERT INTO stops ( stop_id, stop_name, stop_desc, stop_lat, stop_lon, zone_id ) VALUES ( ?, ?, ?, ?, ?, ? )";
-
-    my $sth = $dbh->prepare($QUERY);
-
-    foreach my $stop (sort {$a->{stop_id} <=> $b->{stop_id} } values %stops) {
-        $sth->execute( $stop->{stop_id},
-                       $stop->{stop_name},
-                       $stop->{stop_desc},
-                       $stop->{stop_lat},
-                       $stop->{stop_lon},
-                       $stop->{zone_id} )
-    } 
-
 }
 
 1;

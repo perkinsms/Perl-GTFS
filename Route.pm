@@ -126,31 +126,18 @@ sub push_trips {
 }
 
 sub fromDB {
-
     my $class = shift;
     my $dbh = shift;
-
     my %routes;
 
     my $sth = $dbh->prepare("SELECT * FROM routes");
-    $sth->execute();
-    print "Routes: ";
-    print join ', ', @{$sth->{NAME_lc}};
-    print "\n";
-
-    my $ROUTESQUERY = "SELECT route_id, route_short_name, route_long_name, route_type FROM routes";
-    $sth = $dbh->prepare($ROUTESQUERY);
     $sth->execute;
 
-    while (my ($route_id, $route_short_name, $route_long_name, $route_type) = $sth->fetchrow()) {
-        $routes{$route_id} = $class->new( { 
-                route_id => $route_id, 
-                route_short_name => $route_short_name, 
-                route_long_name => $route_long_name, 
-                route_type => $route_type,
-        });
+    while (my $datahash = $sth->fetchrow_hashref("NAME_lc")) {
+        my $id = $datahash->{route_id};
+        $routes{$id} = $class->new($datahash);
     }
-
+    $sth->finish;
     return \%routes;
 }
 

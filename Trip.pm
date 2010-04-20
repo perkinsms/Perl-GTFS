@@ -129,30 +129,19 @@ sub push_stops {
 }
 
 sub fromDB {
-
     my $class = shift;
     my $dbh = shift;
-
     my %trips;
 
-    my $sth = $dbh->prepare("SELECT * FROM trips");
-    $sth->execute();
-    print "Trips: ";
-    print join ', ', @{$sth->{NAME_lc}};
-    print "\n";
-
-    my $TRIPSQUERY = "SELECT route_id, service_id, trip_id FROM trips";
-    $sth = $dbh->prepare($TRIPSQUERY);
+    my $sth = $dbh->prepare("SELECT * FROM trips") 
+        or die "Could not prepare trips query!";
     $sth->execute;
 
-    while (my ($route_id, $service_id, $trip_id) = $sth->fetchrow()) {
-        $trips{$trip_id} = $class->new( { 
-                route_id => $route_id,
-                service_id => $service_id,
-                trip_id => $trip_id,
-        });
+    while (my $datahash = $sth->fetchrow_hashref("NAME_lc")) {
+        my $id = $datahash->{trip_id};
+        $trips{$id} = $class->new($datahash);
     }
-
+    $sth->finish;
     return \%trips;
 }
 
