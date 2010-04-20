@@ -17,11 +17,16 @@ sub new {
     $self->{database} = $dbh;
     $self->{options} = $optref;
 	bless($self, $class);
-    $self->getStopsfromDB();
-    $self->getTripsfromDB();
-    $self->getRoutesfromDB();
-    $self->get_patterns();
+    $self->initialize;
     return $self;
+}
+
+sub initialize {
+    my $self = shift;
+    $self->{stops} = $self->getStopsfromDB();
+    $self->{trips} = $self->getTripsfromDB();
+    $self->{routes} = $self->getRoutesfromDB();
+    $self->get_patterns();
 }
 
 sub get_patterns {
@@ -113,12 +118,12 @@ sub get_patterns {
 
 sub getStopsfromDB {
     my $self = shift;
-    $self->{stops} = Stop->fromDB($self->{database});
+    return Stop->fromDB($self->{database});
 }
 
 sub getTripsfromDB {
     my $self = shift;
-    $self->{trips} = Trip->fromDB($self->{database});
+    return Trip->fromDB($self->{database});
 }
 
 sub getRoutesfromDB {
@@ -129,6 +134,7 @@ sub getRoutesfromDB {
         my $route_id = $trip->{route_id};
         $self->{routes}{$route_id}->push_trips($trip->trip_id);
     }
+    return $self->{routes}
 }
 
 1;

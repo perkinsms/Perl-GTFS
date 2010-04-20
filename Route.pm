@@ -23,16 +23,8 @@ use strict;
 
 package Route;
 
-my %reqcols;
-foreach my $col (qw(route_id route_short_name route_long_name route_type)) {
-    $reqcols{$col} = 1;
-}
-
-my %optcols;
-foreach my $col (qw(agency_id route_desc route_url route_color route_text_color)) {
-    $optcols{$col} = 1;
-}
-
+my @reqcols = qw/route_id route_short_name route_name route_type/;
+my @optcols = qw/agency_id route_desc route_url route_color route_text_color/;
 
 sub new {
 	my $proto = shift;
