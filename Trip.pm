@@ -25,40 +25,25 @@ use strict;
 
 package Trip;
 
+my @reqcols = qw/route_id service_id trip_id/;
+my @optcols = qw/trip_headsign trip_short_name direction_id block_id shape_id/;
+
 sub new {
 	my $proto = shift;
 	my $data = shift;
 	my $class = ref($proto) || $proto;
 	my $self = {};
-	$self->{route_id} = undef;
-	$self->{service_id} = undef;
-	$self->{trip_id} = undef;
-	$self->{trip_headsign} = undef;
-	$self->{trip_short_name} = undef;
-	$self->{direction_id} = undef;
-	$self->{block_id} = undef;
-	$self->{shape_id} = undef;
-	$self->{pattern_id} = undef;
+	$self->{route_id} = $data->{route_id} or die "No defined route_id in trips: $!";
+	$self->{service_id} = $data->{service_id} or die "No defined service_id in trips: $!";
+	$self->{trip_id} = $data->{trip_id} or die "No defined trip_id in trips: $!";
+	$self->{trip_headsign} = $data->{trip_headsign} if $data->{trip_headsign};
+	$self->{trip_short_name} = $data->{trip_short_name} if $data->{trip_short_name};
+	$self->{direction_id} = $data->{direction_id} if $data->{direction_id};
+	$self->{block_id} = $data->{block_id} if $data->{block_id};
+	$self->{shape_id} = $data->{shape_id} if $data->{shape_id};
+	$self->{pattern_id} = $data->{pattern_id} if $data->{pattern_id};
 	$self->{STOPS} = [];
-	bless($self, $class);
-    $data and $self->initialize($data);
-	return $self;
-}
-
-sub initialize {
-	my $self = shift;
-	my $data = shift;
-	$self->{route_id}        = ($data->{route_id} or $self->{route_id});
-	$self->{service_id}      = ($data->{service_id} or $self->{service_id});
-	$self->{trip_id}         = ($data->{trip_id} or $self->{trip_id});
-	$self->{trip_headsign}   = ($data->{trip_headsign} or $self->{trip_headsign});
-	$self->{trip_short_name} = ($data->{trip_short_name} or $self->{trip_short_name});
-	$self->{direction_id}    = ($data->{direction_id} or $self->{direction_id});
-	$self->{block_id}        = ($data->{block_id} or $self->{block_id});
-	$self->{shape_id}        = ($data->{shape_id} or $self->{shape_id});
-	$self->{pattern_id}      = ($data->{pattern_id} or $self->{pattern_id});
-	$self->{STOPS}           = (\@{ $data->{STOPS} }
-                            or $self->{STOPS});
+	return bless($self, $class);
 }
 
 sub route_id {
@@ -141,7 +126,6 @@ sub fromDB {
         my $id = $datahash->{trip_id};
         $trips{$id} = $class->new($datahash);
     }
-    $sth->finish;
     return \%trips;
 }
 

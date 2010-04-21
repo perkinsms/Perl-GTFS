@@ -23,7 +23,7 @@ use strict;
 
 package Route;
 
-my @reqcols = qw/route_id route_short_name route_name route_type/;
+my @reqcols = qw/route_id route_short_name route_long_name route_type/;
 my @optcols = qw/agency_id route_desc route_url route_color route_text_color/;
 
 sub new {
@@ -31,15 +31,15 @@ sub new {
     my $data = shift;
 	my $class = ref($proto) || $proto;
 	my $self = {};
-	$self->{route_id} = ($data->{route_id} or undef);
-	$self->{agency_id} = ($data->{agency_id} or undef);
-	$self->{route_short_name} = ($data->{route_short_name} or undef);
-	$self->{route_long_name} = ($data->{route_long_name} or undef);
-	$self->{route_desc} = ($data->{route_desc} or undef);
-	$self->{route_type} = ($data->{route_type} or undef);
-	$self->{route_url} = ($data->{route_url} or undef);
-	$self->{route_color} = ($data->{route_color} or undef);
-	$self->{route_text_color} = ($data->{route_text_color} or undef);
+	$self->{route_id} = $data->{route_id} or die "No defined route_id: $!";
+	$self->{route_short_name} = $data->{route_short_name} or die "No defined route_short_name: $!";
+	$self->{route_long_name} = $data->{route_long_name} or die "No defined route_long_name: $!";
+	$self->{route_type} = $data->{route_type} or die "No defined route_type: $!";
+	$self->{agency_id} = $data->{agency_id} if $data->{agency_id};
+	$self->{route_desc} = $data->{route_desc} if $data->{route_desc};
+	$self->{route_url} = $data->{route_url} if $data->{route_url};
+	$self->{route_color} = $data->{route_color} if $data->{route_color};
+	$self->{route_text_color} = $data->{route_text_color} if $data->{route_text_color};
     $self->{PATTERNS} = (\@{$data->{PATTERNS} } or []);
     $self->{TRIPS} = (\@{$data->{TRIPS} } or []);
 	return bless($self, $class);

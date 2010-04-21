@@ -78,7 +78,7 @@ my $sth = $dbh->prepare($patternquery);
 my $tripinsertquery = "UPDATE trips SET pattern_id = ? WHERE trip_id = ?";
 my $tripq = $dbh->prepare($tripinsertquery);
 
-my $pattern_id = 0;
+my $pattern_id = 1;
 
 foreach my $route (sort {$a->route_id <=> $b->route_id} values %routes) {
 #foreach my $route (@routes{qw(40 260 159 106 167 312)}) {
@@ -95,8 +95,7 @@ foreach my $route (sort {$a->route_id <=> $b->route_id} values %routes) {
         
         my $pattern = Pattern->new( {
                 pattern_id      =>  $pattern_id,
-                TRIP    =>  $trip_id,
-                ROUTE   =>  $route->route_id,
+                route_id   =>  $route->route_id,
                 STOPS   =>  \@stoplist,
                 INDEXES =>  \@stoporder,
                 COUNT   =>  1,          #number of trips that use this pattern
@@ -119,7 +118,7 @@ foreach my $route (sort {$a->route_id <=> $b->route_id} values %routes) {
                 #change the current pattern_id,
                 #and add it to the %patterns hash
 
-                $patterns{$pattern->pattern_id(++$pattern_id)} = $pattern;
+                $patterns{$pattern->pattern_id($pattern_id++)} = $pattern;
                 print "Found a new pattern: " . $pattern->pattern_id . "\n";
 
         }

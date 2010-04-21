@@ -21,35 +21,26 @@ use strict;
 #  
 
 package Pattern;
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(@_patterns_reqcols @_patterns_optcols);
+
+our @_patterns_reqcols = qw/route_id pattern_id stop_sequence stop_id distance/;
+our @_patterns_optcols = qw//;
 
 sub new {
 	my $proto = shift;
     my $data = shift;
 	my $class = ref($proto) || $proto;
 	my $self = {};
-	$self->{pattern_id} = undef;
-	$self->{TRIP} = undef;
-	$self->{COUNT} = undef;
-	$self->{ROUTE} = undef;
-	$self->{TOTALDIST} = undef;
-	$self->{STOPS} = [];
-	$self->{INDEXES} = [];
-	$self->{DISTANCES} = [];
-	bless($self, $class);
-    $data and $self->initialize($data);
-	return $self;
-}
-
-sub initialize {
-	my $self = shift;
-	my $data = shift;
-	$self->{pattern_id} = ($data->{pattern_id} or $self->{pattern_id});
-	$self->{TRIP} = ($data->{TRIP} or $self->{TRIP});
-	$self->{COUNT} = ($data->{COUNT} or $self->{COUNT});
-	$self->{ROUTE} = ($data->{ROUTE} or $self->{ROUTE});
-	$self->{STOPS} = ($data->{STOPS} or $self->{STOPS});
-	$self->{INDEXES} = ($data->{INDEXES} or $self->{INDEXES});
-	$self->{DISTANCES} = ($data->{DISTANCES} or $self->{DISTANCES});
+	$self->{pattern_id} = $data->{pattern_id} or die "No pattern_id sent to New: $!";
+	$self->{COUNT} = $data->{COUNT} if $data->{COUNT};
+	$self->{route_id} = $data->{route_id} if $data->{route_id};
+	$self->{TOTALDIST} = $data->{TOTALDIST} || $data->{DISTANCES}[-1] || undef;
+	$self->{STOPS} = $data->{STOPS} || [];
+	$self->{INDEXES} = $data->{INDEXES} || [];
+	$self->{DISTANCES} = $data->{DISTANCES} || [];
+	return bless($self, $class);
 }
 
 sub pattern_id {
@@ -70,10 +61,10 @@ sub count {
 	return $self->{COUNT};
 }
 
-sub route {
+sub route_id {
 	my $self = shift;
-	if (@_) { $self->{ROUTE} = shift }
-	return $self->{ROUTE};
+	if (@_) { $self->{route_id} = shift }
+	return $self->{route_id};
 }
 
 sub totaldist {
@@ -85,14 +76,14 @@ sub totaldist {
 sub stops { 
 	my $self = shift;
 	if ($_ = shift) { $self->{STOPS} = $_; }
-	return @ {$self->{STOPS}}; 
+	return $self->{STOPS}; 
 }
 
 sub addstop { 
 	my $self = shift;
     my $newstop = shift;
     push @{ $self->{STOPS} }, $newstop;
-	return @{ $self->{STOPS} }; 
+	return $self->{STOPS}; 
 }
 
 sub indexes { 

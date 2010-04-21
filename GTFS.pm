@@ -6,7 +6,8 @@ package GTFS;
 use Stop;
 use Trip;
 use Route;
-use Pattern;
+use Pattern qw(@_patterns_reqcols);
+use List::Compare;
 
 sub new {
 	my $proto = shift;
@@ -32,20 +33,19 @@ sub initialize {
 sub get_patterns {
     my $self = shift;
     my $dbh = $self->{database};
-    my $routes = $self->{routes};
-    my $trips = $self->{trips};
-    my $stops = $self->{stops};
     $self->{patterns} = {};
 
     # analyze the trips and routes to find the patterns
     my $patternquery = "select stop_sequence, stop_id from stop_times where trip_id = ? order by stop_sequence";
     my $sth = $dbh->prepare($patternquery);
-    my $pattern_id = 0;
+    my $pattern_id = 1;
 
-    foreach my $route (sort {$a->route_id <=> $b->route_id} values %$routes) {
+    # foreach my $route (sort {$a->route_id <=> $b->route_id} values %{ $self->{routes} }) {
+    foreach my $route ( values %{ $self->{routes} }) {
+    #foreach my $route ( @{ $self->{routes} }{1 .. 10}) {
         my $route_patterns = {};
         foreach my $trip_id ($route->trips) {
-            my $trip = $trips->{$trip_id};
+            my $trip = $self->{trips}{$trip_id};
             my (@stoporder, @stoplist);
             $sth->execute($trip->trip_id);
 
@@ -57,7 +57,7 @@ sub get_patterns {
             my $pattern = Pattern->new( {
                     pattern_id      =>  $pattern_id,
                     TRIP    =>  $trip_id,
-                    ROUTE   =>  $route->route_id,
+                    route_id   =>  $route->route_id,
                     STOPS   =>  \@stoplist,
                     INDEXES =>  \@stoporder,
                     COUNT   =>  1,          #number of trips that use this pattern
@@ -80,14 +80,23 @@ sub get_patterns {
                     #change the current pattern_id,
                     #and add it to the %route_patterns hash
 
-                    ++$pattern_id;
                     $pattern->pattern_id($pattern_id);
                     $route_patterns->{$pattern_id} = $pattern;
                     print "Found a new pattern: " . $pattern->pattern_id . "\n";
 
+                    my $length = $#stoporder;
+                    my @dist = (0);
+                    for (my $i = 1; $i <= $length; $i++) {
+                        my $a = $self->{stops}{$stoplist[$i-1]};
+                        my $b = $self->{stops}{$stoplist[$i]};
+                        push @dist, ($dist[$i-1] + $a->twostopdist($b));
+                    }
+                    $pattern->distances(\@dist);
+                    $pattern->totaldist($dist[-1]);
+                    ++$pattern_id;
             }
 
-            $trips->{$trip_id}{pattern} = $pattern_id; 
+            $self->{trips}{$trip_id}{pattern} = $pattern_id; 
         }
 
         $route->push_patterns( values %$route_patterns );
@@ -96,23 +105,42 @@ sub get_patterns {
         }
 
     }
+}
 
-    foreach my $route (sort {$a->route_id <=> $b->route_id} values %$routes) {
-        foreach my $pattern (sort {$a->pattern_id <=> $b->pattern_id} $route->patterns) {
+sub writePatternstoDB {
+    my $self = shift;
+    my $dbh = shift || $self->{database};
 
-            my $length = $#{$pattern->indexes};
-            my @dist = (0);
-            my @stopids = $pattern->stops;
-            for (my $i = 1; $i <= $length; $i++) {
-                my $a = $stops->{$stopids[$i-1]};
-                my $b = $stops->{$stopids[$i]};
-                push @dist, ($dist[$i-1] + $a->twostopdist($b));
-            }
-            $pattern->distances(\@dist);
-            $pattern->totaldist($dist[-1]);
+    my @fieldslist = @_patterns_reqcols;
 
-       }
+    $dbh->do("DROP TABLE IF EXISTS patterns")
+        or die "Could not drop table: $!";
 
+    my $columnstring = join " VARCHAR(20), ", @fieldslist;
+    $columnstring .= " VARCHAR(20)";
+    
+
+    $dbh->do("CREATE TABLE patterns ($columnstring)")
+        or die "Could not create table: $!";
+
+    my $sth = $dbh->prepare("INSERT INTO patterns SET route_id=?, pattern_id=?, stop_sequence=?, stop_id=?, distance=?");
+
+    foreach my $pat (values %{ $self->{patterns} } ) {
+        print "Writing Pattern: " . $pat->pattern_id . "\n";
+        my $route_id = $pat->route_id;
+        my @stops = @{ $pat->stops };
+        my @indexes = @{ $pat->indexes };
+        my @distances = @{ $pat->distances };
+        for (my $i = 0; $i <= $#indexes; $i++) {
+            $sth->execute(
+                $route_id,
+                $pat->{pattern_id},
+                $indexes[$i],
+                $stops[$i],
+                $distances[$i]
+            )
+                or die "Could not insert data: $!";
+        }
     }
 }
 

@@ -19,7 +19,11 @@ use strict;
 #  new - create a new Route object, with blank data
 #  id - get or set ID attribute
 #  name - get or set NAME attribute
+
 package Stop;
+
+my @reqcols = qw/stop_id stop_name stop_lat stop_lon/;
+my @optcols = qw/stop_desc stop_code zone_id stop_url location_type parent_station/;
 
 my $PI = 3.14159;
 
@@ -32,12 +36,12 @@ sub new {
 	$self->{stop_name} = $data->{stop_name} or die "No Stop Name provided: $!";
 	$self->{stop_lat} = $data->{stop_lat} or die "No Stop Lat provided: $!";
 	$self->{stop_lon} = $data->{stop_lon} or die "No Stop Lon provided: $!";
-	$self->{stop_desc} = ($data->{stop_desc} or undef);
-	$self->{stop_code} = ($data->{stop_code} or undef);
-	$self->{zone_id} = ($data->{zone_id} or undef);
-	$self->{stop_url} = ($data->{stop_url} or undef); 
-	$self->{location_type} = ($data->{location_type} or undef);
-	$self->{parent_station} = ($data->{parent_station} or undef);
+	$self->{stop_desc} = $data->{stop_desc} if $data->{stop_desc};
+	$self->{stop_code} = $data->{stop_code} if $data->{stop_code};
+	$self->{zone_id} = $data->{zone_id} if $data->{zone_id};
+	$self->{stop_url} = $data->{stop_url} if $data->{stop_url}; 
+	$self->{location_type} = $data->{location_type} if $data->{location_type};
+	$self->{parent_station} = $data->{parent_station} if $data->{parent_station};
 	$self->{CENTERDIST} = ($data->{CENTERDIST} || undef);
 	bless($self, $class);
 	return $self;
