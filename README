@@ -36,6 +36,6 @@ $->{stops} is the same with Stop.pm and stop_id
 TO DO:
 write similar methods for writing each object type to a database handle
 extend the methods for Route and Trip to fill in the array of trips and stops, respectively
-write a GTFS method for initializing the Pattern objects (done) and storing them in the database
+write a GTFS method for initializing the Pattern objects (done) and storing them in the database (done)
 write methods to find average speed, travel time and stops per mile for each Trip or Pattern object
 write a KML output module
