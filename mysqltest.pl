@@ -12,7 +12,8 @@ my $dbh = DBI->connect("DBI:mysql:database=$database",$username,$password) or di
 
 my $gtfs = GTFS->new($dbh);
 
-$gtfs->writePatternstoDB($dbh);
+$gtfs->writeStopstoDB();
+
 
 #my $sth = $dbh->prepare("SELECT * FROM stop_times");
 #$sth->execute;

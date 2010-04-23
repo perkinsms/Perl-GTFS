@@ -21,8 +21,11 @@ use DBI;
 $dbh = DBI->connect("DBI:mysql:database=$database",$username,$password) or die;
 $gtfs_data = GTFS->new($dbh,[$options]);
 
-
 You can use other DBI connection handles, I've tested CSV and MySQL, which is what I'll use for testing.
+
+If you have a database handle that's suitable for writing, you can write an existing GTFS stops, routes or trips hash to the table (overwrites all data -- be careful!)
+
+$gtfs_data->write[Stops|Trips|Routes|All]toDB($dbh);
 
 $gtfs_data is a reference to a hash with the following key->value pairs:
 

@@ -3,7 +3,7 @@ use strict;
 
 package GTFS;
 
-use Stop;
+use Stop qw(@_stops_reqcols @_stops_optcols);
 use Trip;
 use Route;
 use Pattern qw(@_patterns_reqcols);
@@ -27,7 +27,7 @@ sub initialize {
     $self->{stops} = $self->getStopsfromDB();
     $self->{trips} = $self->getTripsfromDB();
     $self->{routes} = $self->getRoutesfromDB();
-    $self->get_patterns();
+    #$self->get_patterns();
 }
 
 sub get_patterns {
@@ -111,17 +111,20 @@ sub writePatternstoDB {
     my $self = shift;
     my $dbh = shift || $self->{database};
 
-    my @fieldslist = @_patterns_reqcols;
+    #my @fieldslist = @_patterns_reqcols;
 
-    $dbh->do("DROP TABLE IF EXISTS patterns")
-        or die "Could not drop table: $!";
+    #$dbh->do("DROP TABLE IF EXISTS patterns")
+    #    or die "Could not drop table: $!";
 
-    my $columnstring = join " VARCHAR(20), ", @fieldslist;
-    $columnstring .= " VARCHAR(20)";
+    #my $columnstring = join " VARCHAR(20), ", @fieldslist;
+    #$columnstring .= " VARCHAR(20)";
     
 
-    $dbh->do("CREATE TABLE patterns ($columnstring)")
-        or die "Could not create table: $!";
+    #$dbh->do("CREATE TABLE patterns ($columnstring)")
+    #    or die "Could not create table: $!";
+    
+    $dbh->do("DELETE FROM patterns")
+        or die "Could not clear table: $!";
 
     my $sth = $dbh->prepare("INSERT INTO patterns SET route_id=?, pattern_id=?, stop_sequence=?, stop_id=?, distance=?");
 
@@ -149,9 +152,31 @@ sub getStopsfromDB {
     return Stop->fromDB($self->{database});
 }
 
+sub writeStopstoDB {
+    my $self = shift;
+    my $dbh = shift || $self->{database};
+
+    $dbh->do("DELETE FROM stops") or die "Could not delete all stops";
+
+    foreach my $stop (values %{$self->{stops}}) {
+        $stop->toDB($dbh);
+    }
+}
+
 sub getTripsfromDB {
     my $self = shift;
     return Trip->fromDB($self->{database});
+}
+
+sub writeTripstoDB {
+    my $self = shift;
+    my $dbh = shift || $self->{database};
+
+    $dbh->do("DELETE FROM trips") or die "Could not delete all trips";
+
+    foreach my $trip (values %{$self->{trips}}) {
+        $trip->toDB($dbh);
+    }
 }
 
 sub getRoutesfromDB {
@@ -163,6 +188,26 @@ sub getRoutesfromDB {
         $self->{routes}{$route_id}->push_trips($trip->trip_id);
     }
     return $self->{routes}
+}
+
+sub writeRoutestoDB {
+    my $self = shift;
+    my $dbh = shift || $self->{database};
+
+    $dbh->do("DELETE FROM routes") or die "Could not delete all routes";
+
+    foreach my $route (values %{$self->{routes}}) {
+        $route->toDB($dbh);
+    }
+}
+
+sub writeAlltoDB {
+    my $self = shift;
+    my $dbh = shift || $self->{database};
+
+    $self->writeStopstoDB($dbh);
+    $self->writeTripstoDB($dbh);
+    $self->writeRoutestoDB($dbh);
 }
 
 1;

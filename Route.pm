@@ -142,26 +142,15 @@ sub fromDB {
 }
 
 sub toDB {
-    my $class = shift;
+    my $self = shift;
     my $dbh = shift;
-    my $routehashref = shift;
-    my %routes = %{$routehashref};
+    my $tablename = "routes";
+    my @fieldslist = (@reqcols, @optcols);
+    my $columnstring = (join "=?, ", @fieldslist) . "=?";
 
-    $dbh->do("DROP TABLE IF EXISTS routes") or die "Could not drop table routes";
-    $dbh->do("CREATE TABLE routes (route_id varchar(20), agency_id varchar(20), route_short_name varchar(60), route_long_name varchar(60), route_type int(11))") or die "Could not create table routes";
-
-    my $sth = $dbh->prepare("INSERT INTO routes (route_id, agency_id, route_short_name, route_long_name, route_type) VALUES (?, ?, ?, ?, ?)") or die "Could not prepare statement";
-
-    foreach my $route (sort {$a->{route_id} <=> $b->{route_id} } values %routes) {
-        $sth->execute( $route->{route_id},
-                       $route->{agency_id},
-                       $route->{route_short_name},
-                       $route->{route_long_name},
-                       $route->{route_type} )
-    }
-
-    $sth->finish;
-
+    my $sth = $dbh->prepare_cached("INSERT INTO $tablename SET $columnstring");
+    $sth->execute( @{$self}{@fieldslist} ) 
+        or die "Could not insert into $tablename";
 }
 
 1;

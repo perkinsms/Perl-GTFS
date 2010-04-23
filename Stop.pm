@@ -21,9 +21,12 @@ use strict;
 #  name - get or set NAME attribute
 
 package Stop;
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(@_stops_reqcols @_stops_optcols);
 
-my @reqcols = qw/stop_id stop_name stop_lat stop_lon/;
-my @optcols = qw/stop_desc stop_code zone_id stop_url location_type parent_station/;
+my @_stops_reqcols = qw/stop_id stop_name stop_lat stop_lon/;
+my @_stops_optcols = qw/stop_desc stop_code zone_id stop_url location_type parent_station/;
 
 my $PI = 3.14159;
 
@@ -158,6 +161,19 @@ sub fromDB {
     }
     $sth->finish;
     return \%stops;
+}
+
+sub toDB {
+    my $self = shift;
+    my $dbh = shift;
+    my $tablename = "stops";
+    my @fieldslist = (@_stops_reqcols, @_stops_optcols);
+    my $columnstring = (join "=?, ", @fieldslist) . "=?";
+    
+    my $sth = $dbh->prepare_cached("INSERT INTO $tablename SET $columnstring");
+
+    $sth->execute( @{$self}{@fieldslist} ) 
+        or die "Could not insert into $tablename";
 }
 
 1;

@@ -129,4 +129,16 @@ sub fromDB {
     return \%trips;
 }
 
+sub toDB {
+    my $self = shift;
+    my $dbh = shift;
+    my $tablename = "trips";
+    my @fieldslist = (@reqcols, @optcols);
+    my $columnstring = (join "=?, ", @fieldslist) . "=?";
+
+    my $sth = $dbh->prepare_cached("INSERT INTO $tablename SET $columnstring");
+    $sth->execute( @{$self}{@fieldslist} ) 
+        or die "Could not insert into $tablename";
+}
+
 1;
