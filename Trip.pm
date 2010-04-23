@@ -25,7 +25,7 @@ use strict;
 
 package Trip;
 
-my @reqcols = qw/route_id service_id trip_id/;
+my @reqcols = qw/service_id trip_id/;
 my @optcols = qw/trip_headsign trip_short_name direction_id block_id shape_id/;
 
 sub new {

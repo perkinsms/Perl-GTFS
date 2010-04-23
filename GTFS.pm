@@ -36,7 +36,7 @@ sub get_patterns {
     $self->{patterns} = {};
 
     # analyze the trips and routes to find the patterns
-    my $patternquery = "select stop_sequence, stop_id from stop_times where trip_id = ? order by stop_sequence";
+    my $patternquery = "SELECT stop_sequence, stop_id FROM stop_times WHERE trip_id = ? ORDER BY stop_sequence";
     my $sth = $dbh->prepare($patternquery);
     my $pattern_id = 1;
 
@@ -111,18 +111,6 @@ sub writePatternstoDB {
     my $self = shift;
     my $dbh = shift || $self->{database};
 
-    #my @fieldslist = @_patterns_reqcols;
-
-    #$dbh->do("DROP TABLE IF EXISTS patterns")
-    #    or die "Could not drop table: $!";
-
-    #my $columnstring = join " VARCHAR(20), ", @fieldslist;
-    #$columnstring .= " VARCHAR(20)";
-    
-
-    #$dbh->do("CREATE TABLE patterns ($columnstring)")
-    #    or die "Could not create table: $!";
-    
     $dbh->do("DELETE FROM patterns")
         or die "Could not clear table: $!";
 
@@ -208,6 +196,13 @@ sub writeAlltoDB {
     $self->writeStopstoDB($dbh);
     $self->writeTripstoDB($dbh);
     $self->writeRoutestoDB($dbh);
+}
+
+sub transfertable {
+    my $self = shift;
+    my $tablename = shift;
+    my $dbhout = shift;
+    my $dbhin = shift || $self->{database};
 }
 
 1;
