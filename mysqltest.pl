@@ -12,12 +12,4 @@ my $dbh = DBI->connect("DBI:mysql:database=$database",$username,$password) or di
 
 my $gtfs = GTFS->new($dbh);
 
-$gtfs->writeStopstoDB();
-
-
-#my $sth = $dbh->prepare("SELECT * FROM stop_times");
-#$sth->execute;
-#my $table_ary_ref = $sth->fetchall_arrayref({});
-
-
 $dbh->disconnect;

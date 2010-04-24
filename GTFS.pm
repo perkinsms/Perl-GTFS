@@ -3,6 +3,8 @@ use strict;
 
 package GTFS;
 
+use Data::Dumper;
+
 use Stop qw(@_stops_reqcols @_stops_optcols);
 use Trip;
 use Route;
@@ -27,7 +29,7 @@ sub initialize {
     $self->{stops} = $self->getStopsfromDB();
     $self->{trips} = $self->getTripsfromDB();
     $self->{routes} = $self->getRoutesfromDB();
-    #$self->get_patterns();
+    $self->get_patterns() if $self->{options}{patterns};
 }
 
 sub get_patterns {
@@ -203,6 +205,25 @@ sub transfertable {
     my $tablename = shift;
     my $dbhout = shift;
     my $dbhin = shift || $self->{database};
+
+    print "Inserting $tablename into Database\n";
+
+    my $sthin = $dbhin->prepare_cached("SELECT * FROM $tablename");
+    $sthin->execute;
+    my @fieldslist = @{ $sthin->{"NAME_lc"} };
+
+    my $fieldstring = (join "=?, ", @fieldslist) . "=?";
+
+    $dbhout->do("DELETE FROM $tablename");
+    my $sthout = $dbhout->prepare_cached("INSERT INTO $tablename SET $fieldstring");
+
+    while (my $data = $sthin->fetchrow_hashref()) {
+        foreach my $datum (values %{ $data} ) {
+            if ($datum eq '') { undef $datum }
+        }
+        $sthout->execute( @{$data}{@fieldslist} );
+    }
 }
+
 
 1;

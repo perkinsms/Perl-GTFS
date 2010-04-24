@@ -21,6 +21,7 @@ use strict;
 #  
 
 package Pattern;
+use Digest::MurmurHash qw(murmur_hash);
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(@_patterns_reqcols @_patterns_optcols);
@@ -115,15 +116,20 @@ sub adddistance {
 sub isequal {
     my $self = shift;
     my $other = shift;
-    my @astops = @{ $self->{STOPS}  };
-    my @bstops = @{ $other->{STOPS} };
+    my $astops = join ",", @{ $self->{STOPS}  };
+    my $bstops = join ",", @{ $other->{STOPS} };
+    my $ahash = $self->{hash} || ($self->{hash} = murmur_hash($astops));
+    my $bhash = $other->{hash} || ($other->{hash} = murmur_hash($bstops));
 
-    if ($#astops != $#bstops) {return 0;} # not equal length arrays can't be equal!
-    my $length = $#astops;
-    for (my $i = 0; $i < $length; $i++)  {
-        return 0 if ($astops[$i] != $bstops[$i]);
-    }
-    return 1;
+    return 0 if ($ahash != $bhash);
+    return 1; 
+
+    #if ($#astops != $#bstops) {return 0;} # not equal length arrays can't be equal!
+    #my $length = $#astops;
+    #for (my $i = 0; $i < $length; $i++)  {
+    #    return 0 if ($astops[$i] != $bstops[$i]);
+    #}
+    #return 1;
 }
 
 sub fromDB {
