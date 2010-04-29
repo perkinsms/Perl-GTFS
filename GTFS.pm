@@ -20,7 +20,7 @@ sub new {
     $self->{database} = $dbh;
     $self->{options} = $optref;
 	bless($self, $class);
-    $self->initialize;
+    $self->initialize if $self->{options}{loaddata};
     return $self;
 }
 
