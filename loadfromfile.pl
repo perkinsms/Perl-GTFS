@@ -13,7 +13,10 @@ my $data = {
 
 my @tablenames = qw/agency calendar calendar_dates routes stops trips stop_times/;
 
-open($data->{fh}, '>', $data->{path_to_data} . "/" . $data->{database} . "/load-data.sql") or die "Could not open file for writing SQL commands: $!";
+open($data->{fh}, '>', qq[$data->{path_to_data}/$data->{database}/load-data.sql]) or die "Could not open file for writing SQL commands: $!";
+my $fh = $data->{fh};
+
+print $fh "USE " . $data->{database} . "\;\n\n";
 
 foreach my $table (@tablenames) {
     print "Loading $table\n";
@@ -35,13 +38,16 @@ sub loadtable {
     my @fieldslist = @{$csv_fh->header};
     my $fieldstring = "(" . (join ",", @fieldslist) . ")";
     
-    my $loaddataquery = "LOAD DATA LOCAL INFILE '$path_to_data/$database/$table.txt' REPLACE INTO TABLE $table COLUMNS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY \'\\r\\n\' IGNORE 1 LINES ";
+    my $loaddataquery = qq[LOAD DATA LOCAL INFILE '$path_to_data/$database/$table.txt' REPLACE INTO TABLE $table COLUMNS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\\r\\n' IGNORE 1 LINES ];
 
     if ($table eq "stop_times") {
         $fieldstring =~ s/arrival_time/\@avar/;
         $fieldstring =~ s/departure_time/\@dvar/;
-        $fieldstring =~ s/shape_dist_traveled/\@svar/;
-        $loaddataquery .= $fieldstring . ' SET arrival_time=NULLIF(@avar,\'\'),departure_time=NULLIF(@dvar,\'\'),shape_dist_traveled=NULLIF(@svar,\'\')';
+        $loaddataquery .= $fieldstring . q[ SET arrival_time=NULLIF(@avar,''),departure_time=NULLIF(@dvar,'')];
+        if ($fieldstring =~ /shape_dist_traveled/) {
+            $loaddataquery =~ s[shape_dist_traveled][\@svar];
+            $loaddataquery .= q[,shape_dist_traveled=NULLIF(@svar,'')];
+        }
     } else {
         $loaddataquery .= $fieldstring;
     }
