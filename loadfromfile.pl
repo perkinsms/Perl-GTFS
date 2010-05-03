@@ -53,18 +53,8 @@ sub loadtable {
     }
     close $csv_fh;
 
-
-    #my $dbh = DBI->connect("DBI:mysql:database=$database",$username,$password) or die "Could not connect: $DBI::errstr";
-
-    #$dbh->do("TRUNCATE TABLE $table") or die "Could not delete all data from $table" . $dbh->errstr;
-
-
     print $outfh "TRUNCATE TABLE $table\;\n";
-
-    #$dbh->do($loaddataquery) or die "Could not load data from $table.txt: " . $dbh->errstr;
-
     print $outfh "$loaddataquery\;\n";
-
     print $outfh "\n";
 
     #$dbh->disconnect;

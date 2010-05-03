@@ -55,6 +55,7 @@ CREATE TABLE `trips` (
 	block_id VARCHAR(255),
     shape_id VARCHAR(255),
 	pattern_id VARCHAR(255),
+    average_speed DECIMAL(5,2),
 	KEY `route_id` (route_id),
 	KEY `service_id` (service_id),
 	KEY `direction_id` (direction_id),
