@@ -4,6 +4,39 @@ A set of perl modules for dealing with GTFS data
 
 See Google's GTFS spec for the details on what a GTFS Feed looks like
 
+INSTALLATION:
+
+1.  Obtain a GTFS feed from your favorite transit agency, unzip it to 
+./input/$(agency)_gtfs/
+
+From here on, I'll just refer to "agency_gtfs"
+
+2.  Run the preprocessor command
+
+perl -i~ preprocessor.pl input/agency_gtfs/*.txt
+
+This will strip off offending byte order markers, remove blank lines in the file, and remove empty strings that actually have whitespace between the commas.
+
+3.  Edit "load-gtfs.sql" to update the database name for your agency.  For example, change the database name to wmata_gtfs for wmata.
+
+4.  Create a database in your MySQL database, and the appropriate tables.  You'll need CREATE DATABASE permissions on your SQL server to do this.
+
+mysql -u root -p < load-gtfs.sql
+
+optionally, create a user that has at least table permissions in your database.
+
+5.  Create the SQL importing script, edit loadfromfile.pl to include your username and password, and the name of your agency database (also the name for your agency files directory)
+
+loadfromfile.pl
+
+6.  Use the created SQL importing script to load your data
+
+mysql -u user -p -D agency_gtfs < input/agency_gtfs/load-data.sql
+
+7.  (optional) Next, use the script to create patterns and write the pattern tables:
+
+
+
 USAGE:
 
 Create a database handle $dbh with one of the DBI modules.

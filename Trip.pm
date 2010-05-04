@@ -25,86 +25,20 @@ use strict;
 
 package Trip;
 
+use Moose;
 my @reqcols = qw/route_id service_id trip_id/;
-my @optcols = qw/trip_headsign trip_short_name direction_id block_id shape_id/;
+my @optcols = qw/trip_headsign trip_short_name direction_id block_id shape_id pattern_id/;
 
-sub new {
-	my $proto = shift;
-	my $data = shift;
-	my $class = ref($proto) || $proto;
-	my $self = {};
-	$self->{route_id} = $data->{route_id} or die "No defined route_id in trips: $!";
-	$self->{service_id} = $data->{service_id} or die "No defined service_id in trips: $!";
-	$self->{trip_id} = $data->{trip_id} or die "No defined trip_id in trips: $!";
-	$self->{trip_headsign} = $data->{trip_headsign} if $data->{trip_headsign};
-	$self->{trip_short_name} = $data->{trip_short_name} if $data->{trip_short_name};
-	$self->{direction_id} = $data->{direction_id} if $data->{direction_id};
-	$self->{block_id} = $data->{block_id} if $data->{block_id};
-	$self->{shape_id} = $data->{shape_id} if $data->{shape_id};
-	$self->{pattern_id} = $data->{pattern_id} if $data->{pattern_id};
-	$self->{STOPS} = [];
-	return bless($self, $class);
-}
-
-sub route_id {
-	my $self = shift;
-	if (@_) { $self->{route_id} = shift }
-	return $self->{route_id};
-}
-
-sub service_id {
-	my $self = shift;
-	if (@_) { $self->{service_id} = shift }
-	return $self->{service_id};
-}
-
-sub trip_id {
-	my $self = shift;
-	if (@_) { $self->{trip_id} = shift }
-	return $self->{trip_id};
-}
-
-sub trip_headsign {
-	my $self = shift;
-	if (@_) { $self->{trip_headsign} = shift }
-	return $self->{trip_headsign};
-}
-
-sub trip_short_name {
-	my $self = shift;
-	if (@_) { $self->{trip_short_name} = shift }
-	return $self->{trip_short_name};
-}
-
-sub direction_id {
-	my $self = shift;
-	if (@_) { $self->{direction_id} = shift }
-	return $self->{direction_id};
-}
-
-sub block_id {
-	my $self = shift;
-	if (@_) { $self->{block_id} = shift }
-	return $self->{block_id};
-}
-
-sub shape_id {
-	my $self = shift;
-	if (@_) { $self->{shape_id} = shift }
-	return $self->{shape_id};
-}
-
-sub pattern_id {
-	my $self = shift;
-	if (@_) { $self->{pattern_id} = shift }
-	return $self->{pattern_id};
-}
-
-sub stops { 
-	my $self = shift;
-	if (@_) { $self->{STOPS} = @_; }
-	return @{ $self->{STOPS} };
-}
+has 'route_id' => (is => 'ro', isa => 'Str', default => '');
+has 'service_id' => (is => 'ro', isa => 'Str', default => '');
+has 'trip_id' => (is => 'ro', isa => 'Str', default => '');
+has 'trip_headsign' => (is => 'ro', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'trip_short_name' => (is => 'ro', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'direction_id' => (is => 'ro', isa => 'Maybe[Int]', default => 0);
+has 'block_id' => (is => 'ro', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'shape_id' => (is => 'ro', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'pattern_id' => (is => 'rw', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'stops' => (is => 'rw', isa => 'Maybe[ArrayRef]', lazy => 1, default => sub { [] });
 
 sub push_stops {
 	my $self = shift;
@@ -140,5 +74,7 @@ sub toDB {
     $sth->execute( @{$self}{@fieldslist} ) 
         or die "Could not insert into $tablename";
 }
+__PACKAGE__->meta->make_immutable;
+no Moose;
 
 1;

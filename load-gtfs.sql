@@ -1,5 +1,8 @@
 /* Required GTFS tables */
 
+CREATE DATABASE IF NOT EXISTS agency_gtfs;
+use agency_gtfs;
+
 DROP TABLE IF EXISTS `agency`;
 
 CREATE TABLE `agency` (
@@ -168,21 +171,3 @@ CREATE TABLE `patterns` (
 	stop_id VARCHAR(255),
     distance DECIMAL(10,4) UNSIGNED
 );
-
-/*
-
-LOAD DATA LOCAL INFILE 'input/wmata_gtfs/agency.txt' INTO TABLE agency FIELDS TERMINATED BY ',' IGNORE 1 LINES;
-
-LOAD DATA LOCAL INFILE 'input/wmata_gtfs/calendar_dates.txt' INTO TABLE calendar_dates FIELDS TERMINATED BY ',' IGNORE 1 LINES;
-
-LOAD DATA LOCAL INFILE 'input/wmata_gtfs/calendar.txt' INTO TABLE calendar FIELDS TERMINATED BY ',' IGNORE 1 LINES;
-
-LOAD DATA LOCAL INFILE 'input/wmata_gtfs/routes.txt' INTO TABLE routes FIELDS TERMINATED BY ',' IGNORE 1 LINES;
-
-LOAD DATA LOCAL INFILE 'input/wmata_gtfs/stops.txt' INTO TABLE stops FIELDS TERMINATED BY ',' IGNORE 1 LINES;
-
-LOAD DATA LOCAL INFILE 'input/wmata_gtfs/trips.txt' INTO TABLE trips FIELDS TERMINATED BY ',' IGNORE 1 LINES;
-
-LOAD DATA LOCAL INFILE 'input/wmata_gtfs/stop_times.txt' INTO TABLE stop_times FIELDS TERMINATED BY ',' IGNORE 1 LINES;
-
-*/

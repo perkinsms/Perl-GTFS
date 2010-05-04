@@ -21,100 +21,23 @@ use strict;
 #  name - get or set NAME attribute
 
 package Stop;
-require Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(@_stops_reqcols @_stops_optcols);
 
-my @_stops_reqcols = qw/stop_id stop_name stop_lat stop_lon/;
-my @_stops_optcols = qw/stop_desc stop_code zone_id stop_url location_type parent_station/;
+use Moose;
 
 my $PI = 3.14159;
+my @_stops_reqcols = qw/stop_id stop_name stop_lat stop_lon/;
+my @_stops_optcols = qw/stop_code stop_desc zone_id stop_url location_type parent_station/;
 
-sub new {
-	my $proto = shift;
-	my $data = shift;
-	my $class = ref($proto) || $proto;
-	my $self = {};
-	$self->{stop_id} = $data->{stop_id} or die "No Stop ID provided: $!";
-	$self->{stop_name} = $data->{stop_name} or die "No Stop Name provided: $!";
-	$self->{stop_lat} = $data->{stop_lat} or die "No Stop Lat provided: $!";
-	$self->{stop_lon} = $data->{stop_lon} or die "No Stop Lon provided: $!";
-	$self->{stop_desc} = $data->{stop_desc} if $data->{stop_desc};
-	$self->{stop_code} = $data->{stop_code} if $data->{stop_code};
-	$self->{zone_id} = $data->{zone_id} if $data->{zone_id};
-	$self->{stop_url} = $data->{stop_url} if $data->{stop_url}; 
-	$self->{location_type} = $data->{location_type} if $data->{location_type};
-	$self->{parent_station} = $data->{parent_station} if $data->{parent_station};
-	$self->{CENTERDIST} = ($data->{CENTERDIST} || undef);
-	bless($self, $class);
-	return $self;
-}
-
-sub stop_id {
-	my $self = shift;
-	if (@_) { $self->{stop_id} = shift }
-	return $self->{stop_id};
-}
-
-sub stop_code {
-	my $self = shift;
-	if (@_) { $self->{stop_code} = shift }
-	return $self->{stop_code};
-}
-
-sub stop_name {
-	my $self = shift;
-	if (@_) { $self->{stop_name} = shift }
-	return $self->{stop_name};
-}
-
-sub stop_desc {
-	my $self = shift;
-	if (@_) { $self->{stop_desc} = shift }
-	return $self->{stop_desc};
-}
-
-sub stop_lat {
-	my $self = shift;
-	if (@_) { $self->{stop_lat} = shift }
-	return $self->{stop_lat};
-}
-
-sub stop_lon {
-	my $self = shift;
-	if (@_) { $self->{stop_lon} = shift }
-	return $self->{stop_lon};
-}
-
-sub zone_id {
-	my $self = shift;
-	if (@_) { $self->{zone_id} = shift }
-	return $self->{zone_id};
-}
-
-sub stop_url {
-	my $self = shift;
-	if (@_) { $self->{stop_url} = shift }
-	return $self->{stop_url};
-}
-
-sub location_type {
-	my $self = shift;
-	if (@_) { $self->{location_type} = shift }
-	return $self->{location_type};
-}
-
-sub parent_station {
-	my $self = shift;
-	if (@_) { $self->{parent_station} = shift }
-	return $self->{parent_station};
-}
-
-sub centerdist {
-	my $self = shift;
-	if (@_) { $self->{CENTERDIST} = shift }
-	return $self->{CENTERDIST};
-}
+has 'stop_id' => (is => 'ro', isa => 'Str', default => '');
+has 'stop_code' => (is => 'ro', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'stop_name' => (is => 'ro', isa => 'Str', default => '');
+has 'stop_desc' => (is => 'ro', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'stop_lat' => (is => 'ro', isa => 'Num', default => 0);
+has 'stop_lon' => (is => 'ro', isa => 'Num', default => 0);
+has 'zone_id' => (is => 'ro', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'stop_url' => (is => 'ro', isa => 'Maybe[Str]', default => '', lazy => 1);
+has 'location_type' => (is => 'ro', isa => 'Maybe[Int]', default => 0, lazy => 1);
+has 'parent_station' => (is => 'ro', isa => 'Maybe[Str]', default => '0', lazy => 1);
 
 sub disttopoint {
 	my $self = shift;
@@ -175,5 +98,8 @@ sub toDB {
     $sth->execute( @{$self}{@fieldslist} ) 
         or die "Could not insert into $tablename";
 }
+
+__PACKAGE__->meta->make_immutable;
+no Moose;
 
 1;

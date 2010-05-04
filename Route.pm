@@ -22,107 +22,35 @@ use strict;
 #  new - create a new Route object, optional data
 
 package Route;
+use Moose;
 
 my @reqcols = qw/route_id route_short_name route_long_name route_type/;
 my @optcols = qw/agency_id route_desc route_url route_color route_text_color/;
 
-sub new {
-	my $proto = shift;
-    my $data = shift;
-	my $class = ref($proto) || $proto;
-	my $self = {};
-	$self->{route_id} = $data->{route_id} or die "No defined route_id: $!";
-	$self->{route_short_name} = $data->{route_short_name} or die "No defined route_short_name: $!";
-	$self->{route_long_name} = $data->{route_long_name} or die "No defined route_long_name: $!";
-	$self->{route_type} = $data->{route_type} or die "No defined route_type: $!";
-	$self->{agency_id} = $data->{agency_id} if $data->{agency_id};
-	$self->{route_desc} = $data->{route_desc} if $data->{route_desc};
-	$self->{route_url} = $data->{route_url} if $data->{route_url};
-	$self->{route_color} = $data->{route_color} if $data->{route_color};
-	$self->{route_text_color} = $data->{route_text_color} if $data->{route_text_color};
-    $self->{PATTERNS} = (\@{$data->{PATTERNS} } or []);
-    $self->{TRIPS} = (\@{$data->{TRIPS} } or []);
-	return bless($self, $class);
-}
-
-sub route_id {
-	my $self = shift;
-	if (@_) { $self->{route_id} = shift }
-	return $self->{route_id};
-}
-
-sub agency_id {
-	my $self = shift;
-	if (@_) { $self->{agency_id} = shift }
-	return $self->{agency_id};
-}
-
-sub route_short_name {
-	my $self = shift;
-	if (@_) { $self->{route_short_name} = shift }
-	return $self->{route_short_name};
-}
-
-sub route_long_name {
-	my $self = shift;
-	if (@_) { $self->{route_long_name} = shift }
-	return $self->{route_long_name};
-}
-
-sub route_desc {
-	my $self = shift;
-	if (@_) { $self->{route_desc} = shift }
-	return $self->{route_desc};
-}
-
-sub route_type {
-	my $self = shift;
-	if (@_) { $self->{route_type} = shift }
-	return $self->{route_type};
-}
-
-sub route_url {
-	my $self = shift;
-	if (@_) { $self->{route_url} = shift }
-	return $self->{route_url};
-}
-
-sub route_color {
-	my $self = shift;
-	if (@_) { $self->{route_color} = shift }
-	return $self->{route_color};
-}
-
-sub route_text_color {
-	my $self = shift;
-	if (@_) { $self->{route_text_color} = shift }
-	return $self->{route_text_color};
-}
-
-sub patterns { 
-	my $self = shift;
-	if (@_) { $self->{PATTERNS} = @_; }
-	return @{ $self->{PATTERNS} };
-}
+has 'route_id' => (is => 'ro', isa => 'Str', default => '');
+has 'route_short_name' => (is => 'ro', isa => 'Maybe[Str]', default => '');
+has 'route_long_name' => (is => 'ro', isa => 'Maybe[Str]', default => '');
+has 'route_type' => (is => 'ro', isa => 'Int', default => 0);
+has 'agency_id' => (is => 'ro', isa => 'Maybe[Str]', default=> '', lazy => 1);
+has 'route_desc' => (is => 'ro', isa => 'Maybe[Str]', default=> '', lazy => 1);
+has 'route_url' => (is => 'ro', isa => 'Maybe[Str]', default=> '', lazy => 1);
+has 'route_color' => (is => 'ro', isa => 'Maybe[Str]', default=> '', lazy => 1);
+has 'route_text_color' => (is => 'ro', isa => 'Maybe[Str]', default=> '', lazy => 1);
+has 'patterns' => (is => 'rw', isa => 'Maybe[ArrayRef[Pattern]]');
+has 'trips' => (is => 'rw', isa => 'Maybe[ArrayRef[Str]]');
 
 sub push_patterns {
 	my $self = shift;
 	my @patterns = @_;
-	push @{ $self->{PATTERNS} }, @patterns;
-	return @{ $self->{PATTERNS}};
-}
-
-sub trips { 
-	my $self = shift;
-	if (@_) { $self->{TRIPS} = @_; }
-	return @{ $self->{TRIPS} };
+	push @{ $self->{patterns} }, @patterns;
+	return @{ $self->{patterns}};
 }
 
 sub push_trips {
 	my $self = shift;
 	my @trips = @_;
-	push @{ $self->{TRIPS} }, @trips;
-	return @{ $self->{TRIPS}};
+	push @{ $self->{trips} }, @trips;
+	return @{ $self->{trips}};
 }
 
 sub fromDB {
@@ -153,4 +81,6 @@ sub toDB {
         or die "Could not insert into $tablename";
 }
 
+__PACKAGE__->meta->make_immutable;
+no Moose;
 1;

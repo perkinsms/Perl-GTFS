@@ -29,7 +29,8 @@ sub initialize {
     $self->{stops} = $self->getStopsfromDB();
     $self->{trips} = $self->getTripsfromDB();
     $self->{routes} = $self->getRoutesfromDB();
-    $self->get_patterns() if $self->{options}{patterns};
+    $self->get_patterns() if $self->{options}{create_patterns};
+    $self->{patterns} //= $self->getPatternsfromDB();  
 }
 
 sub get_patterns {
@@ -46,7 +47,7 @@ sub get_patterns {
     foreach my $route ( values %{ $self->{routes} }) {
     #foreach my $route ( @{ $self->{routes} }{1 .. 10}) {
         my $route_patterns = {};
-        foreach my $trip_id ($route->trips) {
+        foreach my $trip_id (@{$route->trips}) {
             my $trip = $self->{trips}{$trip_id};
             my (@stoporder, @stoplist);
             $sth->execute($trip->trip_id);
@@ -98,7 +99,7 @@ sub get_patterns {
                     ++$pattern_id;
             }
 
-            $self->{trips}{$trip_id}{pattern} = $pattern_id; 
+            $self->{trips}{$trip_id}->pattern_id($pattern->pattern_id); 
         }
 
         $route->push_patterns( values %$route_patterns );
@@ -117,8 +118,9 @@ sub writePatternstoDB {
         or die "Could not clear table: $!";
 
     my $sth = $dbh->prepare("INSERT INTO patterns SET route_id=?, pattern_id=?, stop_sequence=?, stop_id=?, distance=?");
+    my $sthtrip = $dbh->prepare("UPDATE trips SET pattern_id=? where trip_id=?");
 
-    foreach my $pat (values %{ $self->{patterns} } ) {
+    foreach my $pat (sort {$b->pattern_id <=> $a->pattern_id } values %{ $self->{patterns} } ) {
         print "Writing Pattern: " . $pat->pattern_id . "\n";
         my $route_id = $pat->route_id;
         my @stops = @{ $pat->stops };
@@ -135,10 +137,87 @@ sub writePatternstoDB {
                 or die "Could not insert data: $!";
         }
     }
+
+    foreach my $trip (sort {$b->trip_id <=> $a->trip_id} values %{ $self->{trips} } ) {
+        my $trip_id = $trip->trip_id;
+        my $pattern_id = $trip->pattern_id;
+        print "Updating Trip: " . $trip_id . "\n";
+        $sthtrip->execute($pattern_id,$trip_id);
+    }
+
 }
+
+sub writePatternstoFile {
+    my $self = shift;
+    my $pattern_file = shift;
+    my $dbh = $self->{database};
+    my ($directory,$database,$filename) = split /\//, $pattern_file;
+
+    open (my $fh, '>', "$pattern_file") or die "Could not open pattern file for writing!";
+
+    print $fh "route_id,pattern_id,stop_sequence,stop_id,distance\n";
+
+    foreach my $pat (sort {$b->pattern_id <=> $a->pattern_id } values %{ $self->{patterns} } ) {
+        print "Writing Pattern: " . $pat->pattern_id . "\n";
+        my $route_id = $pat->route_id;
+        my @stops = @{ $pat->stops };
+        my @indexes = @{ $pat->indexes };
+        my @distances = @{ $pat->distances };
+        for (my $i = 0; $i <= $#indexes; $i++) {
+            print $fh (join(',',
+                $route_id,
+                $pat->{pattern_id},
+                $indexes[$i],
+                $stops[$i],
+                $distances[$i]
+            ) . "\n")
+                or die "Could not print data to file: $!";
+        }
+    }
+
+    close $fh;
+
+    my $newtripsfile = "$directory/$database/new-trips.txt";
+
+    open ($fh, '>', "$newtripsfile") or die "Could not open new trips file";
+
+    my ($trip_id,$trip) = each %{$self->{trips}};
+
+    my $columnslist = join(',', keys %{$trip});
+
+    print $fh "$columnslist\n";
+
+    foreach my $trip (values %{ $self->{trips} } ) {
+        my $outputstring = '';
+        foreach my $field (values %{$trip}) {
+            $field //= '';
+            if ($field =~ /,/) { $field = "\"$field\"" };
+            $outputstring .= "$field,";
+        }
+        $outputstring =~ s/,$//;
+        print $fh "$outputstring\n";
+    }
+
+    my $sql_file = "$directory/$database/load-patterns.sql";
+    open ($fh, '>', "$sql_file") or die "Could not open pattern SQL insert file for writing!";
+
+    print $fh <<"OUTPUT";
+USE $database;
+TRUNCATE TABLE patterns;
+LOAD DATA LOCAL INFILE '$pattern_file' REPLACE INTO TABLE patterns COLUMNS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\\n' IGNORE 1 LINES (route_id,pattern_id,stop_sequence,stop_id,distance);
+
+TRUNCATE TABLE trips;
+LOAD DATA LOCAL INFILE '$newtripsfile' REPLACE INTO TABLE trips COLUMNS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\\n' IGNORE 1 LINES ($columnslist);
+OUTPUT
+
+    close $fh;
+
+}
+
 
 sub getStopsfromDB {
     my $self = shift;
+    print "Getting Stops from DB\n";
     return Stop->fromDB($self->{database});
 }
 
@@ -155,6 +234,7 @@ sub writeStopstoDB {
 
 sub getTripsfromDB {
     my $self = shift;
+    print "Getting Trips from DB\n";
     return Trip->fromDB($self->{database});
 }
 
@@ -171,6 +251,7 @@ sub writeTripstoDB {
 
 sub getRoutesfromDB {
     my $self = shift;
+    print "Getting Routes from DB\n";
     my $trips = $self->{trips} || $self->getTripsfromDB();
     $self->{routes} = Route->fromDB($self->{database});
     foreach my $trip (values %$trips) {
@@ -199,31 +280,5 @@ sub writeAlltoDB {
     $self->writeTripstoDB($dbh);
     $self->writeRoutestoDB($dbh);
 }
-
-sub transfertable {
-    my $self = shift;
-    my $tablename = shift;
-    my $dbhout = shift;
-    my $dbhin = shift || $self->{database};
-
-    print "Inserting $tablename into Database\n";
-
-    my $sthin = $dbhin->prepare_cached("SELECT * FROM $tablename");
-    $sthin->execute;
-    my @fieldslist = @{ $sthin->{"NAME_lc"} };
-
-    my $fieldstring = (join "=?, ", @fieldslist) . "=?";
-
-    $dbhout->do("DELETE FROM $tablename");
-    my $sthout = $dbhout->prepare_cached("INSERT INTO $tablename SET $fieldstring");
-
-    while (my $data = $sthin->fetchrow_hashref()) {
-        foreach my $datum (values %{ $data} ) {
-            if ($datum eq '') { undef $datum }
-        }
-        $sthout->execute( @{$data}{@fieldslist} );
-    }
-}
-
 
 1;
