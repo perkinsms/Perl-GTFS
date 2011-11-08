@@ -3,9 +3,9 @@ use strict;
 
 while (<>) {
     chomp;
-    next if /^\s*$/;
     $. == 1 and s/\xEF\xBB\xBF//;
-    while(s/,\s+,/,,/g) {};
-    s/,\s*$/,/;
-    print "$_\n";
+    s/\s*,\s*/,/g;
+    s/\r\n|\n|\r//g;
+    next if /^\s*$/;
+    print "$_\r\n";
 }
